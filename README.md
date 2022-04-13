@@ -4,6 +4,10 @@
 
 - Change desired batch size in ```utils.h```
 
+## Layer configuration for FashionMNIST NN model
+
+L1 Conv &rarr; L2 Maxpool &rarr; L3 Step &rarr; L4 Conv &rarr; L5 Maxpool &rarr; L6 Step &rarr; L7 Flattening &rarr; L8 Gemm &rarr; L9 Step &rarr; L10 Gemm
+
 ### Default starting configuration: 
 - Layer 1, 2, 4, 5, 8, 10 on GPU using *PROFILE XYZ*
 - Layer 3, 6, 7, 9 on CPU.
