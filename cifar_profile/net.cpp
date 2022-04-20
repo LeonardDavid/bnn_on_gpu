@@ -17,43 +17,43 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   float sum_cpu = 0;
   float sum_gpu = 0;
   /* Layer 1 CPU */
-  // Layer 1: Conv @ cpp.NHWC {% else %} /{% if pads == [0, 0, 0, 0] %}
-  auto start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 32; h++) {
-      for (int w = 0; w < 32; w++) {
-        for (int m = 0; m < 128; m++) {
-          cuda_layer_1_output[index4D(b,h,w,m,32,32,128)] = layer_1_bias[m]; // layer_1_output[b][h][w][m] / cuda_layer_1_output[index4D(b,h,w,m,32,32,128)]
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          int iH = h * 1 + kH - 1;
-          if (iH >= 0 && iH < 32) {
-            for (int kW = 0; kW < 3; kW++) {
-              int iW = w * 1 + kW - 1;
-              if (iW >= 0 && iW < 32) {
-                for (int c = 0; c < 3; c++) {
-                  for (int m = 0; m < 128; m++) {
-                    cuda_layer_1_output[index4D(b,h,w,m,32,32,128)] += layer_1_weight[kH][kW][c][m] * x[b][iH][iW][c]; // layer_1_output[b][h][w][m] / cuda_layer_1_output[index4D(b,h,w,m,32,32,128)] // x[b][iH][iW][c] / x[index4D(b,iH,iW,c,32,32,3)]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  auto end = std::chrono::high_resolution_clock::now();
-  auto l1_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l1_kernel_time = 0;
-
-  /* Layer 1 GPU */
+  // // Layer 1: Conv @ cpp.NHWC {% else %} /{% if pads == [0, 0, 0, 0] %}
   // auto start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer1_conv(x, cuda_layer_1_output);
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 32; h++) {
+  //     for (int w = 0; w < 32; w++) {
+  //       for (int m = 0; m < 128; m++) {
+  //         cuda_layer_1_output[index4D(b,h,w,m,32,32,128)] = layer_1_bias[m]; // layer_1_output[b][h][w][m] / cuda_layer_1_output[index4D(b,h,w,m,32,32,128)]
+  //       }
+  //       for (int kH = 0; kH < 3; kH++) {
+  //         int iH = h * 1 + kH - 1;
+  //         if (iH >= 0 && iH < 32) {
+  //           for (int kW = 0; kW < 3; kW++) {
+  //             int iW = w * 1 + kW - 1;
+  //             if (iW >= 0 && iW < 32) {
+  //               for (int c = 0; c < 3; c++) {
+  //                 for (int m = 0; m < 128; m++) {
+  //                   cuda_layer_1_output[index4D(b,h,w,m,32,32,128)] += layer_1_weight[kH][kW][c][m] * x[b][iH][iW][c]; // layer_1_output[b][h][w][m] / cuda_layer_1_output[index4D(b,h,w,m,32,32,128)] // x[b][iH][iW][c] / x[index4D(b,iH,iW,c,32,32,3)]
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
   // auto end = std::chrono::high_resolution_clock::now();
   // auto l1_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  // float l1_kernel_time = kernel_time;
-  // l1_time -= l1_kernel_time*1000000.0f; // ms->ns
+  // float l1_kernel_time = 0;
+
+  /* Layer 1 GPU */
+  auto start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer1_conv(x, cuda_layer_1_output);
+  auto end = std::chrono::high_resolution_clock::now();
+  auto l1_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  float l1_kernel_time = kernel_time;
+  l1_time -= l1_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L1 = 5720315.5
   // ofstream gg1("layer1/par.out");
@@ -99,43 +99,43 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
 
   /* Layer 3 CPU */
-  // Layer 3: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 32; h++) {
-      for (int w = 0; w < 32; w++) {
-        for (int m = 0; m < 128; m++) {
-          cuda_layer_3_output[index4D(b,h,w,m,32,32,128)] = layer_3_bias[m]; // layer_3_output[b][h][w][m] / cuda_layer_3_output[index4D(b,h,w,m,32,32,128)]
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          int iH = h * 1 + kH - 1;
-          if (iH >= 0 && iH < 32) {
-            for (int kW = 0; kW < 3; kW++) {
-              int iW = w * 1 + kW - 1;
-              if (iW >= 0 && iW < 32) {
-                for (int m = 0; m < 128; m++) {
-                  for (int c = 0; c < 2; c++) {
-                    cuda_layer_3_output[index4D(b,h,w,m,32,32,128)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_3_weight[kH][kW][m][c] ^ cuda_layer_2_output[index4D(b,iH,iW,c,32,32,128)])) - 64; // layer_2_output[b][iH][iW][c] / cuda_layer_2_output[index4D(b,iH,iW,c,32,32,2)]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l3_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l3_kernel_time = 0;    
+  // // Layer 3: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 32; h++) {
+  //     for (int w = 0; w < 32; w++) {
+  //       for (int m = 0; m < 128; m++) {
+  //         cuda_layer_3_output[index4D(b,h,w,m,32,32,128)] = layer_3_bias[m]; // layer_3_output[b][h][w][m] / cuda_layer_3_output[index4D(b,h,w,m,32,32,128)]
+  //       }
+  //       for (int kH = 0; kH < 3; kH++) {
+  //         int iH = h * 1 + kH - 1;
+  //         if (iH >= 0 && iH < 32) {
+  //           for (int kW = 0; kW < 3; kW++) {
+  //             int iW = w * 1 + kW - 1;
+  //             if (iW >= 0 && iW < 32) {
+  //               for (int m = 0; m < 128; m++) {
+  //                 for (int c = 0; c < 2; c++) {
+  //                   cuda_layer_3_output[index4D(b,h,w,m,32,32,128)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_3_weight[kH][kW][m][c] ^ cuda_layer_2_output[index4D(b,iH,iW,c,32,32,128)])) - 64; // layer_2_output[b][iH][iW][c] / cuda_layer_2_output[index4D(b,iH,iW,c,32,32,2)]
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l3_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l3_kernel_time = 0;    
 
   /* Layer 3 GPU */ 
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer3_conv(cuda_layer_2_output, cuda_layer_3_output);
-  // end = std::chrono::high_resolution_clock::now();  
-  // auto l3_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  // float l3_kernel_time = kernel_time-l1_kernel_time;
-  // l3_time -= l3_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer3_conv(cuda_layer_2_output, cuda_layer_3_output);
+  end = std::chrono::high_resolution_clock::now();  
+  auto l3_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  float l3_kernel_time = kernel_time-l1_kernel_time;
+  l3_time -= l3_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L3 = -2335755.75
   // ofstream gg3("layer3/par.out");
@@ -150,35 +150,35 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   // cout<<endl;
   
   /* Layer 4 CPU */
-  // Layer 4: MaxPool @ cpp.NHWC {% if pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 16; h++) {
-      for (int w = 0; w < 16; w++) {
-        for (int c = 0; c < 128; c++) {
-          cuda_layer_4_output[index4D(b,h,w,c,16,16,128)] = std::numeric_limits<float>::lowest(); // layer_4_output[b][h][w][m] / cuda_layer_4_output[index4D(b,h,w,c,16,16,128)]
-        }
-        for (int kH = 0; kH < 2; kH++) {
-          for (int kW = 0; kW < 2; kW++) {
-            for (int c = 0; c < 128; c++) {
-              cuda_layer_4_output[index4D(b,h,w,c,16,16,128)] = std::max(cuda_layer_3_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,32,32,128)], cuda_layer_4_output[index4D(b,h,w,c,16,16,128)]); // layer_3_output[b][h * 2 + kH][w * 2 + kW][c] / cuda_layer_3_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,32,32,128)]
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  float l4_kernel_time = 0;      
+  // // Layer 4: MaxPool @ cpp.NHWC {% if pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 16; h++) {
+  //     for (int w = 0; w < 16; w++) {
+  //       for (int c = 0; c < 128; c++) {
+  //         cuda_layer_4_output[index4D(b,h,w,c,16,16,128)] = std::numeric_limits<float>::lowest(); // layer_4_output[b][h][w][m] / cuda_layer_4_output[index4D(b,h,w,c,16,16,128)]
+  //       }
+  //       for (int kH = 0; kH < 2; kH++) {
+  //         for (int kW = 0; kW < 2; kW++) {
+  //           for (int c = 0; c < 128; c++) {
+  //             cuda_layer_4_output[index4D(b,h,w,c,16,16,128)] = std::max(cuda_layer_3_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,32,32,128)], cuda_layer_4_output[index4D(b,h,w,c,16,16,128)]); // layer_3_output[b][h * 2 + kH][w * 2 + kW][c] / cuda_layer_3_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,32,32,128)]
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  // float l4_kernel_time = 0;      
 
   /* Layer 4 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer4_maxpool(cuda_layer_3_output, cuda_layer_4_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  // float l4_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time);
-  // l4_time -= l4_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer4_maxpool(cuda_layer_3_output, cuda_layer_4_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  float l4_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time);
+  l4_time -= l4_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L4 = 1633936.0
   // ofstream gg4("layer4/par.out");
@@ -224,43 +224,43 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   auto l5_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());    
 
   /* Layer 6 CPU */
-  // Layer 6: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 16; h++) {
-      for (int w = 0; w < 16; w++) {
-        for (int m = 0; m < 256; m++) {
-          cuda_layer_6_output[index4D(b,h,w,m,16,16,256)] = layer_6_bias[m]; // layer_6_output[b][h][w][m] / cuda_layer_6_output[index4D(b,h,w,m,16,16,256)]
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          int iH = h * 1 + kH - 1;
-          if (iH >= 0 && iH < 16) {
-            for (int kW = 0; kW < 3; kW++) {
-              int iW = w * 1 + kW - 1;
-              if (iW >= 0 && iW < 16) {
-                for (int m = 0; m < 256; m++) {
-                  for (int c = 0; c < 2; c++) {
-                    cuda_layer_6_output[index4D(b,h,w,m,16,16,256)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_6_weight[kH][kW][m][c] ^ cuda_layer_5_output[index4D(b,iH,iW,c,16,16,128)])) - 64; // layer_5_output[b][iH][iW][c] / cuda_layer_5_output[index4D(b,iH,iW,c,16,16,128)]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l6_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l6_kernel_time = 0;     
+  // // Layer 6: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 16; h++) {
+  //     for (int w = 0; w < 16; w++) {
+  //       for (int m = 0; m < 256; m++) {
+  //         cuda_layer_6_output[index4D(b,h,w,m,16,16,256)] = layer_6_bias[m]; // layer_6_output[b][h][w][m] / cuda_layer_6_output[index4D(b,h,w,m,16,16,256)]
+  //       }
+  //       for (int kH = 0; kH < 3; kH++) {
+  //         int iH = h * 1 + kH - 1;
+  //         if (iH >= 0 && iH < 16) {
+  //           for (int kW = 0; kW < 3; kW++) {
+  //             int iW = w * 1 + kW - 1;
+  //             if (iW >= 0 && iW < 16) {
+  //               for (int m = 0; m < 256; m++) {
+  //                 for (int c = 0; c < 2; c++) {
+  //                   cuda_layer_6_output[index4D(b,h,w,m,16,16,256)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_6_weight[kH][kW][m][c] ^ cuda_layer_5_output[index4D(b,iH,iW,c,16,16,128)])) - 64; // layer_5_output[b][iH][iW][c] / cuda_layer_5_output[index4D(b,iH,iW,c,16,16,128)]
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l6_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l6_kernel_time = 0;     
 
   /* Layer 6 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer6_conv(cuda_layer_5_output, cuda_layer_6_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l6_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  // float l6_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time);
-  // l6_time -= l6_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer6_conv(cuda_layer_5_output, cuda_layer_6_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l6_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  float l6_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time);
+  l6_time -= l6_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L6 = -20699.617188
   // ofstream gg6("layer6/par.out");
@@ -306,43 +306,43 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   auto l7_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());   
 
   /* Layer 8 CPU */
-  // Layer 8: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 16; h++) {
-      for (int w = 0; w < 16; w++) {
-        for (int m = 0; m < 256; m++) {
-          cuda_layer_8_output[index4D(b,h,w,m,16,16,256)] = layer_8_bias[m]; // layer_8_output[b][h][w][m] / 
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          int iH = h * 1 + kH - 1;
-          if (iH >= 0 && iH < 16) {
-            for (int kW = 0; kW < 3; kW++) {
-              int iW = w * 1 + kW - 1;
-              if (iW >= 0 && iW < 16) {
-                for (int m = 0; m < 256; m++) {
-                  for (int c = 0; c < 4; c++) {
-                    cuda_layer_8_output[index4D(b,h,w,m,16,16,256)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_8_weight[kH][kW][m][c] ^ cuda_layer_7_output[index4D(b,iH,iW,c,16,16,256)])) - 64; // layer_7_output[b][iH][iW][c] / cuda_layer_7_output[index4D(b,iH,iW,c,16,16,256)]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l8_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l8_kernel_time = 0;    
+  // // Layer 8: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 16; h++) {
+  //     for (int w = 0; w < 16; w++) {
+  //       for (int m = 0; m < 256; m++) {
+  //         cuda_layer_8_output[index4D(b,h,w,m,16,16,256)] = layer_8_bias[m]; // layer_8_output[b][h][w][m] / 
+  //       }
+  //       for (int kH = 0; kH < 3; kH++) {
+  //         int iH = h * 1 + kH - 1;
+  //         if (iH >= 0 && iH < 16) {
+  //           for (int kW = 0; kW < 3; kW++) {
+  //             int iW = w * 1 + kW - 1;
+  //             if (iW >= 0 && iW < 16) {
+  //               for (int m = 0; m < 256; m++) {
+  //                 for (int c = 0; c < 4; c++) {
+  //                   cuda_layer_8_output[index4D(b,h,w,m,16,16,256)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_8_weight[kH][kW][m][c] ^ cuda_layer_7_output[index4D(b,iH,iW,c,16,16,256)])) - 64; // layer_7_output[b][iH][iW][c] / cuda_layer_7_output[index4D(b,iH,iW,c,16,16,256)]
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l8_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l8_kernel_time = 0;    
 
   /* Layer 8 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer8_conv(cuda_layer_7_output, cuda_layer_8_output);
-  // end = std::chrono::high_resolution_clock::now();  
-  // auto l8_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  // float l8_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time);
-  // l8_time -= l8_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer8_conv(cuda_layer_7_output, cuda_layer_8_output);
+  end = std::chrono::high_resolution_clock::now();  
+  auto l8_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  float l8_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time);
+  l8_time -= l8_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L8 = -225414.96875
   // ofstream gg8("layer8/par.out");
@@ -357,35 +357,35 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   // cout<<endl;
   
   /* Layer 9 CPU */
-  // Layer 9: MaxPool @ cpp.NHWC {% if pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 8; h++) {
-      for (int w = 0; w < 8; w++) {
-        for (int c = 0; c < 256; c++) {
-          cuda_layer_9_output[index4D(b,h,w,c,8,8,256)] = std::numeric_limits<float>::lowest();
-        }
-        for (int kH = 0; kH < 2; kH++) {
-          for (int kW = 0; kW < 2; kW++) {
-            for (int c = 0; c < 256; c++) {
-              cuda_layer_9_output[index4D(b,h,w,c,8,8,256)] = std::max(cuda_layer_8_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,16,16,256)], cuda_layer_9_output[index4D(b,h,w,c,8,8,256)]); // layer_8_output[b][h * 2 + kH][w * 2 + kW][c] / cuda_layer_8_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,16,16,256)]
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l9_kernel_time = 0;    
+  // // Layer 9: MaxPool @ cpp.NHWC {% if pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 8; h++) {
+  //     for (int w = 0; w < 8; w++) {
+  //       for (int c = 0; c < 256; c++) {
+  //         cuda_layer_9_output[index4D(b,h,w,c,8,8,256)] = std::numeric_limits<float>::lowest();
+  //       }
+  //       for (int kH = 0; kH < 2; kH++) {
+  //         for (int kW = 0; kW < 2; kW++) {
+  //           for (int c = 0; c < 256; c++) {
+  //             cuda_layer_9_output[index4D(b,h,w,c,8,8,256)] = std::max(cuda_layer_8_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,16,16,256)], cuda_layer_9_output[index4D(b,h,w,c,8,8,256)]); // layer_8_output[b][h * 2 + kH][w * 2 + kW][c] / cuda_layer_8_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,16,16,256)]
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l9_kernel_time = 0;    
 
   /* Layer 9 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer9_maxpool(cuda_layer_8_output, cuda_layer_9_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  // float l9_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time);
-  // l9_time -= l9_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer9_maxpool(cuda_layer_8_output, cuda_layer_9_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  float l9_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time);
+  l9_time -= l9_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L9 = 2192928.0
   // ofstream gg9("layer9/par.out");
@@ -431,43 +431,43 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   auto l10_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
 
   /* Layer 11 CPU */
-  // Layer 11: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 8; h++) {
-      for (int w = 0; w < 8; w++) {
-        for (int m = 0; m < 512; m++) {
-          cuda_layer_11_output[index4D(b,h,w,m,8,8,512)] = layer_11_bias[m]; // layer_11_output[b][h][w][m] / cuda_layer_11_output[index4D(b,h,w,m,8,8,512)]
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          int iH = h * 1 + kH - 1;
-          if (iH >= 0 && iH < 8) {
-            for (int kW = 0; kW < 3; kW++) {
-              int iW = w * 1 + kW - 1;
-              if (iW >= 0 && iW < 8) {
-                for (int m = 0; m < 512; m++) {
-                  for (int c = 0; c < 4; c++) {
-                    cuda_layer_11_output[index4D(b,h,w,m,8,8,512)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_11_weight[kH][kW][m][c] ^ cuda_layer_10_output[index4D(b,iH,iW,c,8,8,256)])) - 64; // layer_10_output[b][iH][iW][c] / cuda_layer_10_output[index4D(b,iH,iW,c,8,8,256)]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l11_kernel_time = 0;     
+  // // Layer 11: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 8; h++) {
+  //     for (int w = 0; w < 8; w++) {
+  //       for (int m = 0; m < 512; m++) {
+  //         cuda_layer_11_output[index4D(b,h,w,m,8,8,512)] = layer_11_bias[m]; // layer_11_output[b][h][w][m] / cuda_layer_11_output[index4D(b,h,w,m,8,8,512)]
+  //       }
+  //       for (int kH = 0; kH < 3; kH++) {
+  //         int iH = h * 1 + kH - 1;
+  //         if (iH >= 0 && iH < 8) {
+  //           for (int kW = 0; kW < 3; kW++) {
+  //             int iW = w * 1 + kW - 1;
+  //             if (iW >= 0 && iW < 8) {
+  //               for (int m = 0; m < 512; m++) {
+  //                 for (int c = 0; c < 4; c++) {
+  //                   cuda_layer_11_output[index4D(b,h,w,m,8,8,512)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_11_weight[kH][kW][m][c] ^ cuda_layer_10_output[index4D(b,iH,iW,c,8,8,256)])) - 64; // layer_10_output[b][iH][iW][c] / cuda_layer_10_output[index4D(b,iH,iW,c,8,8,256)]
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l11_kernel_time = 0;     
 
   /* Layer 11 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer11_conv(cuda_layer_10_output, cuda_layer_11_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  // float l11_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time);
-  // l11_time -= l11_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer11_conv(cuda_layer_10_output, cuda_layer_11_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  float l11_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time);
+  l11_time -= l11_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L11 = 38519.339844
   // ofstream gg11("layer11/par.out");
@@ -513,43 +513,43 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   auto l12_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
 
   /* Layer 13 CPU */
-  // Layer 13: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 8; h++) {
-      for (int w = 0; w < 8; w++) {
-        for (int m = 0; m < 512; m++) {
-          cuda_layer_13_output[index4D(b,h,w,m,8,8,512)] = layer_13_bias[m]; // layer_13_output[b][h][w][m] / cuda_layer_13_output[index4D(b,h,w,m,8,8,512)]
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          int iH = h * 1 + kH - 1;
-          if (iH >= 0 && iH < 8) {
-            for (int kW = 0; kW < 3; kW++) {
-              int iW = w * 1 + kW - 1;
-              if (iW >= 0 && iW < 8) {
-                for (int m = 0; m < 512; m++) {
-                  for (int c = 0; c < 8; c++) {
-                    cuda_layer_13_output[index4D(b,h,w,m,8,8,512)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_13_weight[kH][kW][m][c] ^ cuda_layer_12_output[index4D(b,iH,iW,c,8,8,512)])) - 64; // layer_12_output[b][iH][iW][c] / cuda_layer_12_output[index4D(b,iH,iW,c,8,8,512)]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l13_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l13_kernel_time = 0;      
+  // // Layer 13: Conv @ cpp.binary {% else %} /{% if layer.pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 8; h++) {
+  //     for (int w = 0; w < 8; w++) {
+  //       for (int m = 0; m < 512; m++) {
+  //         cuda_layer_13_output[index4D(b,h,w,m,8,8,512)] = layer_13_bias[m]; // layer_13_output[b][h][w][m] / cuda_layer_13_output[index4D(b,h,w,m,8,8,512)]
+  //       }
+  //       for (int kH = 0; kH < 3; kH++) {
+  //         int iH = h * 1 + kH - 1;
+  //         if (iH >= 0 && iH < 8) {
+  //           for (int kW = 0; kW < 3; kW++) {
+  //             int iW = w * 1 + kW - 1;
+  //             if (iW >= 0 && iW < 8) {
+  //               for (int m = 0; m < 512; m++) {
+  //                 for (int c = 0; c < 8; c++) {
+  //                   cuda_layer_13_output[index4D(b,h,w,m,8,8,512)] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_13_weight[kH][kW][m][c] ^ cuda_layer_12_output[index4D(b,iH,iW,c,8,8,512)])) - 64; // layer_12_output[b][iH][iW][c] / cuda_layer_12_output[index4D(b,iH,iW,c,8,8,512)]
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l13_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l13_kernel_time = 0;      
 
   /* Layer 13 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer13_conv(cuda_layer_12_output, cuda_layer_13_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l13_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  // float l13_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time);
-  // l13_time -= l13_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer13_conv(cuda_layer_12_output, cuda_layer_13_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l13_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  float l13_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time);
+  l13_time -= l13_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L13 = -125208.054688
   // ofstream gg13("layer13/par.out");
@@ -564,35 +564,35 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   // cout<<endl;
   
   /* Layer 14 CPU */ 
-  // Layer 14: MaxPool @ cpp.NHWC {% if pads == [0, 0, 0, 0] %}
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int h = 0; h < 4; h++) {
-      for (int w = 0; w < 4; w++) {
-        for (int c = 0; c < 512; c++) {
-          cuda_layer_14_output[index4D(b,h,w,c,4,4,512)] = std::numeric_limits<float>::lowest();
-        }
-        for (int kH = 0; kH < 2; kH++) {
-          for (int kW = 0; kW < 2; kW++) {
-            for (int c = 0; c < 512; c++) {
-              cuda_layer_14_output[index4D(b,h,w,c,4,4,512)] = std::max(cuda_layer_13_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,8,8,512)], cuda_layer_14_output[index4D(b,h,w,c,4,4,512)]); // layer_13_output[b][h * 2 + kH][w * 2 + kW][c] / cuda_layer_13_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,8,8,512)]
-            }
-          }
-        }
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l14_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l14_kernel_time = 0;      
+  // // Layer 14: MaxPool @ cpp.NHWC {% if pads == [0, 0, 0, 0] %}
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int h = 0; h < 4; h++) {
+  //     for (int w = 0; w < 4; w++) {
+  //       for (int c = 0; c < 512; c++) {
+  //         cuda_layer_14_output[index4D(b,h,w,c,4,4,512)] = std::numeric_limits<float>::lowest();
+  //       }
+  //       for (int kH = 0; kH < 2; kH++) {
+  //         for (int kW = 0; kW < 2; kW++) {
+  //           for (int c = 0; c < 512; c++) {
+  //             cuda_layer_14_output[index4D(b,h,w,c,4,4,512)] = std::max(cuda_layer_13_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,8,8,512)], cuda_layer_14_output[index4D(b,h,w,c,4,4,512)]); // layer_13_output[b][h * 2 + kH][w * 2 + kW][c] / cuda_layer_13_output[index4D(b,(h * 2 + kH),(w * 2 + kW),c,8,8,512)]
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l14_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l14_kernel_time = 0;      
 
   /* Layer 14 GPU */ 
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer14_maxpool(cuda_layer_13_output, cuda_layer_14_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l14_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  // float l14_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time+l13_kernel_time);
-  // l14_time -= l14_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer14_maxpool(cuda_layer_13_output, cuda_layer_14_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l14_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  float l14_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time+l13_kernel_time);
+  l14_time -= l14_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L14 = 1373773.625
   // ofstream gg14("layer14/par.out");
@@ -631,29 +631,29 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   unsigned long long *cuda_layer_16_output = (unsigned long long *) layer_15_output;
 
   /* Layer 17 CPU */
-  // Layer 17: Gemm @ cpp.binary
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int d = 0; d < 1024; d++) {
-      cuda_layer_17_output[b*1024 + d] = layer_17_bias[d];
-    }
-    for (int d = 0; d < 1024; d++) {
-      for (int i = 0; i < 128; i++) {
-        cuda_layer_17_output[b*1024 + d] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_17_weight[d][i] ^ cuda_layer_16_output[b*128 + i])) - 64;
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l17_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l17_kernel_time = 0;     
+  // // Layer 17: Gemm @ cpp.binary
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int d = 0; d < 1024; d++) {
+  //     cuda_layer_17_output[b*1024 + d] = layer_17_bias[d];
+  //   }
+  //   for (int d = 0; d < 1024; d++) {
+  //     for (int i = 0; i < 128; i++) {
+  //       cuda_layer_17_output[b*1024 + d] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_17_weight[d][i] ^ cuda_layer_16_output[b*128 + i])) - 64;
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l17_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l17_kernel_time = 0;     
 
   /* Layer 17 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer17_gemm(cuda_layer_16_output, cuda_layer_17_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l17_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  // float l17_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time+l13_kernel_time+l14_kernel_time);
-  // l17_time -= l17_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer17_gemm(cuda_layer_16_output, cuda_layer_17_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l17_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  float l17_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time+l13_kernel_time+l14_kernel_time);
+  l17_time -= l17_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L17 = 10874.058594
   // ofstream gg17("layer17/par.out");
@@ -685,29 +685,29 @@ predict_NeuralNet(unsigned char x[][32][32][3], float * pred) {
   unsigned long long *cuda_layer_18_output = (unsigned long long *) layer_18_output;
 
   /* Layer 19 CPU */
-  // Layer 19: Gemm @ cpp.binary
-  start = std::chrono::high_resolution_clock::now();
-  for (int b = 0; b < BATCH_SIZE; b++){
-    for (int d = 0; d < 10; d++) {
-      cuda_layer_19_output[b*10 + d] = layer_19_bias[d];
-    }
-    for (int d = 0; d < 10; d++) {
-      for (int i = 0; i < 16; i++) {
-        cuda_layer_19_output[b*10 + d] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_19_weight[d][i] ^ cuda_layer_18_output[b*16+i])) - 64; // layer_18_output[b][i] / cuda_layer_18_output[b*16+i]
-      }
-    }
-  }
-  end = std::chrono::high_resolution_clock::now();
-  auto l19_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-  float l19_kernel_time = 0;     
+  // // Layer 19: Gemm @ cpp.binary
+  // start = std::chrono::high_resolution_clock::now();
+  // for (int b = 0; b < BATCH_SIZE; b++){
+  //   for (int d = 0; d < 10; d++) {
+  //     cuda_layer_19_output[b*10 + d] = layer_19_bias[d];
+  //   }
+  //   for (int d = 0; d < 10; d++) {
+  //     for (int i = 0; i < 16; i++) {
+  //       cuda_layer_19_output[b*10 + d] += 2 * __builtin_popcountll((unsigned long long)~(unsigned long long)(layer_19_weight[d][i] ^ cuda_layer_18_output[b*16+i])) - 64; // layer_18_output[b][i] / cuda_layer_18_output[b*16+i]
+  //     }
+  //   }
+  // }
+  // end = std::chrono::high_resolution_clock::now();
+  // auto l19_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+  // float l19_kernel_time = 0;     
 
   /* Layer 19 GPU */
-  // start = std::chrono::high_resolution_clock::now();
-  // kernel_time += layer19_gemm(cuda_layer_18_output, cuda_layer_19_output);
-  // end = std::chrono::high_resolution_clock::now();    
-  // auto l19_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-  // float l19_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time+l13_kernel_time+l14_kernel_time+l17_kernel_time);
-  // l19_time -= l19_kernel_time*1000000.0f; // ms->ns
+  start = std::chrono::high_resolution_clock::now();
+  kernel_time += layer19_gemm(cuda_layer_18_output, cuda_layer_19_output);
+  end = std::chrono::high_resolution_clock::now();    
+  auto l19_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+  float l19_kernel_time = kernel_time-(l1_kernel_time+l3_kernel_time+l4_kernel_time+l6_kernel_time+l8_kernel_time+l9_kernel_time+l11_kernel_time+l13_kernel_time+l14_kernel_time+l17_kernel_time);
+  l19_time -= l19_kernel_time*1000000.0f; // ms->ns
 
   // // checksum L19 = 16.014023
   // ofstream gg19("layer19/par.out");
