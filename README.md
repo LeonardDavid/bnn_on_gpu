@@ -28,7 +28,7 @@ L1 Conv &rarr; L2 Step &rarr; L3 Conv &rarr; L4 Maxpool &rarr; L5 Step &rarr; L6
 
 ### Default starting configuration:
 - Layer 1, 3, 4, 6, 8, 9, 11, 13, 14, 17, 19 on GPU using *PROFILE XYZ*
-- Layer 2, 5, 7, 10, 12, 15, 16, 18
+- Layer 2, 5, 7, 10, 12, 15, 16, 18 on CPU.
 
 ## Run layers on CPU only:
 in ```net.cpp``` (```X``` layer number):
@@ -37,6 +37,7 @@ in ```net.cpp``` (```X``` layer number):
 
 ## Run layers on GPU in different parallel configurations:
 - Revert previous steps in case they were performed
+- Do NOT comment out the STEP layers (i.e. the layers running on CPU by default)
 
 ### Available parallel configurations:
 - *PROFILE X* – data-images
