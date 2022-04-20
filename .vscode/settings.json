@@ -3,7 +3,7 @@
     "files.associations": {
         "algorithm": "cpp",
         "array": "cpp",
-        "atomic": "cpp",
+        "atomic": "cpp", 
         "bit": "cpp",
         "cctype": "cpp",
         "charconv": "cpp",

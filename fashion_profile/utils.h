@@ -1,4 +1,5 @@
 #define BATCH_SIZE 8
+#define NR_CHANNELS 1   // number of channels of input image
 #define IMG_HEIGHT 28   // original input image
 #define IMG_WIDTH 28    // original input image
 #define OUT_SIZE 10     // number of classes

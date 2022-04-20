@@ -39,7 +39,7 @@ auto benchmark(vector<MNISTLoader> &loaderx, bool verbose = false) {
     int matches[1] = {0};
     int const imgsize = IMG_HEIGHT*IMG_WIDTH;
 
-    ofstream g("original_img_2.out");
+    // ofstream g("original_img_2.out");
 
     size_t lsize = loaderx[0].size();
     // size_t lsize = 2; // for testing!
