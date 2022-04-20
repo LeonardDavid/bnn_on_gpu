@@ -1,9 +1,17 @@
 # bnn_on_gpu
 
-- Change desired batch size in ```utils.h```
-- run using 
+1. Navigate to folder of respective model
+2. Change desired batch size in ```utils.h```
+3. A. run using 
 ```
 $ bash run.bash
+```
+3. B. alternitavely: set the path to the CUDA Runtime Library of your system in ```Makefile``` 
+- currently commented out: the path on my personal PC on line 5, and the path on the server on line 7
+- and run using
+```
+$ make
+$ ./fashion_prof.o <OR ./cifar.o>
 ```
 
 ## Layer configuration for FashionMNIST NN model
