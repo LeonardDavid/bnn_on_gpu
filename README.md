@@ -1,8 +1,10 @@
 # bnn_on_gpu
-- First set the path to the CUDA Runtime Library of your system in ```Makefile``` 
-(currently commented out: the path on my personal PC on line 5, and the path on the server on line 7)
 
 - Change desired batch size in ```utils.h```
+- run using 
+```
+$ bash run.bash
+```
 
 ## Layer configuration for FashionMNIST NN model
 
