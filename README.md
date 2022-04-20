@@ -14,13 +14,21 @@ $ make
 $ ./fashion_prof.o <OR ./cifar.o>
 ```
 
-## Layer configuration for FashionMNIST NN model
+## Layer configuration for FashionMNIST BNN model
 
 L1 Conv &rarr; L2 Maxpool &rarr; L3 Step &rarr; L4 Conv &rarr; L5 Maxpool &rarr; L6 Step &rarr; L7 Flattening &rarr; L8 Gemm &rarr; L9 Step &rarr; L10 Gemm
 
 ### Default starting configuration: 
 - Layer 1, 2, 4, 5, 8, 10 on GPU using *PROFILE XYZ*
 - Layer 3, 6, 7, 9 on CPU.
+
+## Layer configuration for CIFAR-10 BNN model
+
+L1 Conv &rarr; L2 Step &rarr; L3 Conv &rarr; L4 Maxpool &rarr; L5 Step &rarr; L6 Conv &rarr; L7 Step &rarr; L8 Conv &rarr; L9 Maxpool &rarr; L10 Step &rarr; L11 Conv &rarr; L12 Step &rarr; L13 Conv &rarr; L14 Maxpool &rarr; L15 Step &rarr; L16 Flattening &rarr; L17 Gemm &rarr; L18 Step &rarr; L19 Gemm
+
+### Default starting configuration:
+- Layer 1, 3, 4, 6, 8, 9, 11, 13, 14, 17, 19 on GPU using *PROFILE XYZ*
+- Layer 2, 5, 7, 10, 12, 15, 16, 18
 
 ## Run layers on CPU only:
 in ```net.cpp``` (```X``` layer number):
@@ -45,8 +53,3 @@ in ```cuda_kernel.cu```:
 - Search for desired profile using CTRL+F, comment out all lines of coude between delimiting lines
 - Don't forget to comment-in previously used profiles (e.g. default profile XYZ at the bottom of the file)
 
-## Run benchmark
-```
-$ make
-$ fashion_prof.o
-```
